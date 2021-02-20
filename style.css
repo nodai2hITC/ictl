@@ -1,0 +1,28 @@
+p {
+    margin: 0;
+}
+
+.program {
+    float: left;
+    width: 50%;
+}
+
+textarea#program {
+    width: 95%;
+    height: 40em;
+    white-space: pre;
+}
+
+textarea.hidden {
+    display: none;
+}
+
+.output {
+    float: right;
+    width: 50%;
+}
+
+textarea#output {
+    width: 95%;
+    height: 38em;
+}
