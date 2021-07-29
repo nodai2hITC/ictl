@@ -1,37 +1,69 @@
 'use strict';
 
-function ictl_compile(program) {
-    // 行番号を除去
-    program = program.replace(/^\(\d+\)\s*/gm, "");
-    // ｜を除去
-    while (program.match(/^(\s*)｜/m)) {
-        program = program.replace(/^(\s*)｜/gm, "$1 ");
-    }
-    // 行頭の⎿を 行末の } に変換
-    while (program.match(/^(\s*)⎿(.+)/m)) {
-        program = program.replace(/^(\s*)⎿(.+)/gm, "$1 $2 }");
-    }
-    // 配列へのアクセスを、デフォルト値が使えるように変換
-    program = program.replace(/(\w+)(\[[^\]]+\])(\s*([^=\s]|==|$))/g,
-                              "($1$2 == undefined ? $1.default : $1$2)$3");
-    // 「もし〇ならば:」を「if (〇) {」に変換
-    program = program.replace(/もし\s*(.+?)\s*ならば:/g,
-                              "if ($1) {");
-    // 「そうでなければ:」を「} else {」に変換
-    program = program.replace(/そうでなければ:/g,
-                              "} else {");
-    // 「〇 を △ から □ まで ☆ ずつ増やしながら:」を「for (〇 = △; 〇 <= □; 〇 += ☆) {」に変換
-    program = program.replace(/(\w+)\s*を\s*(.+?)\s*から\s*(.+?)\s*まで\s*(.+?)\s*ずつ増やしながら:/g,
-                              "for ($1 = $2; $1 <= $3; $1 += $4) {");
-    // 「配列 〇 のすべての要素に △ を代入する」を「〇 = []; 〇.default = △」に変換
-    program = program.replace(/配列\s*(\w+)\s*のすべての要素に\s*(.+?)\s*を代入する/g,
-                              "$1 = []; $1.default = $2");
-    // 「配列変数 〇 を初期化する」を「〇 = []」に変換
-    program = program.replace(/配列変数\s*(\w+)\s*を初期化する/g,
-                              "$1 = []");
+var ICTL = ICTL || {};
 
-    return program;
-}
+ICTL.default_array_size = 26;
+
+(function(){
+    ICTL.compile = function(program){
+        // 行番号を除去
+        program = program.replace(/^\(\d+\)\s*/mg, "");
+        // ｜を除去
+        while (program.match(/^(\s*)｜/m)) {
+            program = program.replace(/^(\s*)｜/mg, "$1  ");
+        }
+
+        // 行頭の⎿を 行末の } に変換
+        while (program.match(/^(\s*)⎿(.+)/m)) {
+            program = program.replace(/^(\s*)⎿(.+)/mg, "$1  $2 }");
+        }
+
+        // 「もし〇ならば:」を「if (〇) {」に変換
+        program = program.replace(/もし(.+?)ならば[:：]$/mg, function(m, p1){
+            return "if (" + replace_and_or(p1) + ") {";
+        });
+        // 「あるいは〇ならば:」を「} else if (〇) {」に変換
+        program = program.replace(/あるいは(.+?)ならば[:：]$/mg, function(m, p1){
+            return "} else if (" + replace_and_or(p1) +") {";
+        });
+        // 「そうでなければ:」を「} else {」に変換
+        program = program.replace(/そうでなければ[:：]$/mg, "} else {");
+
+        // 「〇 を △ から □ まで ☆ ずつ増やしながら繰り返す:」を「for (〇 = △; 〇 <= □; 〇 += ☆) {」に変換
+        program = program.replace(/(\w+)\s*を\s*(.+?)\s*から\s*(.+?)\s*まで\s*(.+?)\s*ずつ増やしながら(?:繰り返す)?[:：]$/mg,
+                                "for ($1 = $2; $1 <= $3; $1 += $4) {");
+        // 「〇の間繰り返す:」を「while (〇) {」に変換
+        program = program.replace(/(.+?)の間繰り返す[:：]$/mg, function(m, p1){
+            return "while (" + replace_and_or(p1) + ") {";
+        });
+
+        // 「配列変数 〇 を初期化する」を「〇 = [];」に変換
+        program = program.replace(/配列変数\s*(\w+)\s*を初期化する$/mg, "$1 = [];");
+        // 「要素数□の配列 〇 のすべての要素に △ を代入する」を「〇 = []; for(let i = 0; i < □; i++) { 〇[i] = △; }」に変換
+        program = program.replace(/(?:要素数(.+)の)?配列\s*(\w+)\s*のすべての要素に\s*(.+?)\s*を代入する$/mg, function(m, p1, p2, p3){
+            return p2 + " = []; " + 
+                "for(let i=0; i < " + (p1 ? p1 : "ICTL.default_array_size") + "; i++) " +
+                "{ " + p2 + "[i] = " + p3 + "; }";
+        });
+
+        // 配列の初期化処理の追加
+        let arrays = program.match(/(\w+)\[/g);
+        if (arrays){
+            let keys = {};
+            for(let i = 0; i < arrays.length; i++){
+                if (keys[arrays[i]]) continue;
+                program = arrays[i].replace("[", "=[];") + program;
+                keys[arrays[i]] = true;
+            }
+        }
+        return program;
+    };
+
+    // and, or を &&, || に変換
+    function replace_and_or(condition){
+        return condition.replace(/ and /g, " && ").replace(/ or /g, " || ");
+    };
+})();
 
 function 要素数(array) {
     return array.length;
@@ -46,6 +78,14 @@ function 差分(char) {
     return "abcdefghijklmnopqrstuvwxyz".indexOf(char);
 }
 
-function 表示する(value) {
-    document.getElementById("output").value += value.toString() + "\n";
+function 切り捨て(f) {
+    return Math.floor(f);
+}
+
+function 表示する() {
+    let str = "";
+    for(let i=0; i<arguments.length; i++){
+        str += arguments[i].toString();
+    }
+    document.getElementById("output").value += str + "\n";
 }
