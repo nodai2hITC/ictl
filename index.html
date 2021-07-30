@@ -13,7 +13,14 @@
 <form>
 
 <div class="program">
-<p>プログラム</p>
+    <p>プログラム 
+        <button id="clear" type="button">新規作成</button> 
+        <button id="format" type="button">プログラム整形</button> 
+
+        <button id="add_if" type="button">IF</button> 
+        <button id="add_for" type="button">FOR</button> 
+        <button id="add_while" type="button">WHILE</button> 
+    </p>
 <textarea id="program">
 (01)i を 1 から 100 まで 1 ずつ増やしながら:
 (02)｜ もし i % 15 == 0 ならば:
@@ -31,30 +38,73 @@
 </div>
 
 <p class="run">
-<button id="run" type="button">実行</button>
+    <button id="run" type="button">実行</button> 
+    <input type="checkbox" id="show_javascript" /><label for="show_javascript">変換した JavaScript を表示</label>
 </p>
 
 <div class="output">
-<p>出力：</p>
-<textarea id="output" readonly></textarea>
+    <textarea id="javascript" readonly></textarea>
+
+    <p>出力：</p>
+    <textarea id="output" readonly></textarea>
 </div>
 
 </form>
 
 <script>
 
-window.addEventListener("DOMContentLoaded", function(){
-    document.getElementById("run").addEventListener("click", function(event){
+window.addEventListener("DOMContentLoaded", function() {
+    function format() {
+        let program = document.getElementById("program").value;
+        document.getElementById("program").value = ICTL.format(program);
+    }
+
+    document.getElementById("run").addEventListener("click", function(event) {
         document.getElementById("output").value = "";
         let program = document.getElementById("program").value;
         let js = ICTL.compile(program);
+        document.getElementById("javascript").value = js;
         try {
             Function(js)();
         } catch(error) {
-            document.getElementById("output").value = error.toString();
+            document.getElementById("output").value = "【エラー】\n" + error.toString();
             throw error;
         }
-    })
+    });
+
+    document.getElementById("clear").addEventListener("click", function(event) {
+        if (confirm("プログラムを消去します。よろしいですか？")) document.getElementById("program").value = "";
+    });
+
+    document.getElementById("format").addEventListener("click", function(event) {
+        format();
+    });
+
+    document.getElementById("add_if").addEventListener("click", function(event) {
+        document.getElementById("program").focus();
+        document.execCommand("insertText", false, "もし 条件1 ならば:\n\nあるいは 条件2 ならば:\n\nそうでなければ:\n\n⎿");
+        format();
+    });
+    document.getElementById("add_for").addEventListener("click", function(event) {
+        document.getElementById("program").focus();
+        document.execCommand("insertText", false, "変数名 を 開始番号 から 終了番号 まで 1 ずつ増やしながら繰り返す:\n\n⎿");
+        format();
+    });
+    document.getElementById("add_while").addEventListener("click", function(event) {
+        document.getElementById("program").focus();
+        document.execCommand("insertText", false, "条件 の間繰り返す:\n\n⎿");
+        format();
+    });
+
+    document.getElementById("show_javascript").addEventListener("click", function(event) {
+        if (document.getElementById("show_javascript").checked) {
+            document.getElementById("javascript").style.display = "inline";
+            document.getElementById("output").style.height = "10em";
+        } else {
+            document.getElementById("javascript").style.display = "none";
+            document.getElementById("output").style.height = "28em";
+        }
+    });
 });
 
 </script>
