@@ -84,9 +84,9 @@ ICTL.default_array_size = 26;
         return new_program;
     };
 
-    // and, or を &&, || に変換
+    // and, or, not を &&, ||, ! に変換
     function replace_and_or(condition) {
-        return condition.replace(/ and /g, " && ").replace(/ or /g, " || ");
+        return condition.replace(/ and /g, " && ").replace(/ or /g, " || ").replace(/ not /g, " ! ");
     };
 })();
 
