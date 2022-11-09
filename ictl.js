@@ -96,7 +96,7 @@ ICTL.default_array_size = 26;
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
             indent += 1 - line.split("⎿").length;
-            if (line.match(/あるいは(.+?)ならば[:：]$/m) ||
+            if (line.match(/そうでなくもし(.+?)ならば[:：]$/m) ||
                 line.match(/そうでなければ[:：]$/m)) indent--;
             if (indent < 0) indent = 0;
             new_program += "(" + ("0000000000" + (i + 1).toString()).slice(-digits) + ")";
