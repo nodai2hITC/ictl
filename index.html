@@ -82,7 +82,7 @@ window.addEventListener("DOMContentLoaded", function() {
 
     document.getElementById("add_if").addEventListener("click", function(event) {
         document.getElementById("program").focus();
-        document.execCommand("insertText", false, "もし 条件1 ならば:\n\nあるいは 条件2 ならば:\n\nそうでなければ:\n\n⎿");
+        document.execCommand("insertText", false, "もし 条件1 ならば:\n\nそうでなくもし 条件2 ならば:\n\nそうでなければ:\n\n⎿");
         format();
     });
     document.getElementById("add_for").addEventListener("click", function(event) {
