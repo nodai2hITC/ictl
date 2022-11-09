@@ -18,13 +18,13 @@ ICTL.default_array_size = 26;
             program = program.replace(/^(\s*)⎿(.+)/mg, "$1  $2 }");
         }
 
-        // 「もし〇ならば:」を「if (〇) {」に変換
-        program = program.replace(/もし(.+?)ならば[:：]$/mg, function(m, p1) {
-            return "if (" + replace_and_or(p1) + ") {";
-        });
         // 「そうでなくもし〇ならば:」を「} else if (〇) {」に変換
         program = program.replace(/そうでなくもし(.+?)ならば[:：]$/mg, function(m, p1) {
             return "} else if (" + replace_and_or(p1) +") {";
+        });
+        // 「もし〇ならば:」を「if (〇) {」に変換
+        program = program.replace(/もし(.+?)ならば[:：]$/mg, function(m, p1) {
+            return "if (" + replace_and_or(p1) + ") {";
         });
         // 「そうでなければ:」を「} else {」に変換
         program = program.replace(/そうでなければ[:：]$/mg, "} else {");
