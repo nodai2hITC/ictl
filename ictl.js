@@ -2,8 +2,6 @@
 
 var ICTL = ICTL || {};
 
-ICTL.default_array_size = 26;
-
 (function() {
     ICTL.compile = function(program) {
         // 行番号を除去
@@ -46,10 +44,13 @@ ICTL.default_array_size = 26;
         // 「配列変数 〇 を初期化する」を「〇 = [];」に変換
         program = program.replace(/配列変数\s*(\w+)\s*を初期化する$/mg, "$1 = [];");
         // 「要素数□の配列 〇 のすべての要素に △ を代入する」を「〇 = []; for(let i = 0; i < □; i++) { 〇[i] = △; }」に変換
-        program = program.replace(/(?:要素数(.+)の)?配列\s*(\w+)\s*のすべての要素に\s*(.+?)\s*を代入する$/mg, function(m, p1, p2, p3) {
+        program = program.replace(/要素数(.+)の配列\s*(\w+)\s*のすべての要素に\s*(.+?)\s*を代入する$/mg, function(m, p1, p2, p3) {
             return p2 + " = []; " + 
-                "for(let i=0; i < " + (p1 ? p1 : "ICTL.default_array_size") + "; i++) " +
-                "{ " + p2 + "[i] = " + p3 + "; }";
+                "for(let i=0; i < " + p1 + "; i++) { " + p2 + "[i] = " + p3 + "; }";
+        });
+        // 「配列 〇 のすべての要素に △ を代入する」を「〇 = new Proxy([], { get: function(obj, prop) { return prop in obj ? obj[prop] : △; } });」に変換
+        program = program.replace(/配列\s*(\w+)\s*のすべての要素に\s*(.+?)\s*を代入する$/mg, function(m, p1, p2) {
+            return p1 + " = new Proxy([], { get: function(obj, prop) { return prop in obj ? obj[prop] : " + p2 + "; } })";
         });
 
         // 配列の初期化処理の追加
