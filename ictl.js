@@ -63,10 +63,18 @@ ICTL.default_array_size = 26;
             }
         }
 
+        // 「＋」を「+」に変換
+        program = program.replace(/＋/mg, "+");
+        // 「－」を「-」に変換
+        program = program.replace(/－/mg, "-");
         // 「〇 ÷ △」を「Math.floor(〇 / △)」に変換（※ かなりテキトー）
         program = program.replace(/([^\s=]+\s*)÷(\s*\S+)/mg, "Math.floor($1/$2)");
         // 「％」を「%」に変換
         program = program.replace(/％/mg, "%");
+        // 「＜」を「<」に変換
+        program = program.replace(/＜/mg, "<");
+        // 「＞」を「>」に変換
+        program = program.replace(/＞/mg, ">");
 
         // 「#」を「//」に変換
         program = program.replace(/#/mg, "//");
