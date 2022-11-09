@@ -7,7 +7,7 @@ ICTL.default_array_size = 26;
 (function() {
     ICTL.compile = function(program) {
         // 行番号を除去
-        program = program.replace(/^\(\d+\) */mg, "");
+        program = program.replace(/^\(\s*\d+\s*\) */mg, "");
         // ｜を除去
         while (program.match(/^(\s*)｜/m)) {
             program = program.replace(/^(\s*)｜/mg, "$1  ");
@@ -22,8 +22,8 @@ ICTL.default_array_size = 26;
         program = program.replace(/もし(.+?)ならば[:：]$/mg, function(m, p1) {
             return "if (" + replace_and_or(p1) + ") {";
         });
-        // 「あるいは〇ならば:」を「} else if (〇) {」に変換
-        program = program.replace(/あるいは(.+?)ならば[:：]$/mg, function(m, p1) {
+        // 「そうでなくもし〇ならば:」を「} else if (〇) {」に変換
+        program = program.replace(/そうでなくもし(.+?)ならば[:：]$/mg, function(m, p1) {
             return "} else if (" + replace_and_or(p1) +") {";
         });
         // 「そうでなければ:」を「} else {」に変換
@@ -32,10 +32,16 @@ ICTL.default_array_size = 26;
         // 「〇 を △ から □ まで ☆ ずつ増やしながら繰り返す:」を「for (〇 = △; 〇 <= □; 〇 += ☆) {」に変換
         program = program.replace(/(\w+)\s*を\s*(.+?)\s*から\s*(.+?)\s*まで\s*(.+?)\s*ずつ増やしながら(?:繰り返す)?[:：]$/mg,
                                 "for ($1 = $2; $1 <= $3; $1 += $4) {");
+        // 「〇 を △ から □ まで ☆ ずつ減らしながら繰り返す:」を「for (〇 = △; 〇 <= □; 〇 -= ☆) {」に変換
+        program = program.replace(/(\w+)\s*を\s*(.+?)\s*から\s*(.+?)\s*まで\s*(.+?)\s*ずつ減らしながら(?:繰り返す)?[:：]$/mg,
+                                "for ($1 = $2; $1 >= $3; $1 -= $4) {");
         // 「〇の間繰り返す:」を「while (〇) {」に変換
         program = program.replace(/(.+?)の間繰り返す[:：]$/mg, function(m, p1) {
             return "while (" + replace_and_or(p1) + ") {";
         });
+
+        // 「【外部からの入力】」を「parseFloat(prompt());」に変換
+        program = program.replace(/【外部からの入力】$/mg, "parseFloat(prompt());");
 
         // 「配列変数 〇 を初期化する」を「〇 = [];」に変換
         program = program.replace(/配列変数\s*(\w+)\s*を初期化する$/mg, "$1 = [];");
@@ -56,6 +62,15 @@ ICTL.default_array_size = 26;
                 keys[arrays[i]] = true;
             }
         }
+
+        // 「〇 ÷ △」を「Math.floor(〇 / △)」に変換（※ かなりテキトー）
+        program = program.replace(/([^\s=]+\s*)÷(\s*\S+)/mg, "Math.floor($1/$2)");
+        // 「％」を「%」に変換
+        program = program.replace(/％/mg, "%");
+
+        // 「#」を「//」に変換
+        program = program.replace(/#/mg, "//");
+
         return program;
     };
 
@@ -105,6 +120,16 @@ function 差分(char) {
 
 function 切り捨て(f) {
     return Math.floor(f);
+}
+
+function 枚数(kingaku) {
+    const Kouka = [1, 5, 10, 50, 100];
+    let maisu = 0, nokori = kingaku;
+    for (let i = 4; i >= 0; i-=1) {
+        maisu = maisu + Math.floor(nokori / Kouka[i]);
+        nokori = nokori % Kouka[i];
+    }
+    return maisu;
 }
 
 function 表示する() {
