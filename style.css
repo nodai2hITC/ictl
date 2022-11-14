@@ -2,24 +2,28 @@ p {
     margin: 0;
 }
 
-.program {
-    float: left;
-    width: 50%;
+@media (min-width: 1100px) {
+    .program {
+        float: left;
+        width: 50%;
+    }
+
+    .output {
+        float: right;
+        width: 50%;
+    }
 }
 
 textarea#program {
     width: 95%;
     height: 30em;
     white-space: pre;
+    font-size: 16px;
+    line-height: 1.2;
 }
 
 textarea.hidden {
     display: none;
-}
-
-.output {
-    float: right;
-    width: 50%;
 }
 
 textarea#javascript {
