@@ -5,15 +5,15 @@ var ICTL = ICTL || {};
 (function() {
     ICTL.compile = function(program) {
         // 行番号を除去
-        program = program.replace(/^\(\s*\d+\s*\) */mg, "");
+        program = program.replace(/^\(\s*[0-9\-]+\s*\) */mg, "");
         // ｜を除去
-        while (program.match(/^(\s*)｜/m)) {
-            program = program.replace(/^(\s*)｜/mg, "$1  ");
+        while (program.match(/^(\s*)[｜│┃]/m)) {
+            program = program.replace(/^(\s*)[｜│┃]/mg, "$1  ");
         }
 
         // 行頭の⎿を 行末の } に変換
-        while (program.match(/^(\s*)⎿(.+)/m)) {
-            program = program.replace(/^(\s*)⎿(.+)/mg, "$1  $2 }");
+        while (program.match(/^(\s*)[⎿┗├┣](.+)/m)) {
+            program = program.replace(/^(\s*)[⎿┗├┣](.+)/mg, "$1  $2 }");
         }
 
         // 「そうでなくもし〇ならば:」を「} else if (〇) {」に変換
@@ -45,7 +45,7 @@ var ICTL = ICTL || {};
         program = program.replace(/配列変数\s*(\w+)\s*を初期化する$/mg, "$1 = [];");
         // 「要素数□の配列 〇 のすべての要素に △ を代入する」を「〇 = []; for(let i = 0; i < □; i++) { 〇[i] = △; }」に変換
         program = program.replace(/要素数(.+)の配列\s*(\w+)\s*のすべての要素に\s*(.+?)\s*を代入する$/mg, function(m, p1, p2, p3) {
-            return p2 + " = []; " + 
+            return p2 + " = []; " +
                 "for(let i=0; i < " + p1 + "; i++) { " + p2 + "[i] = " + p3 + "; }";
         });
         // 「配列 〇 のすべての要素に △ を代入する」を「〇 = new Proxy([], { get: function(obj, prop) { return prop in obj ? obj[prop] : △; } });」に変換
@@ -84,9 +84,9 @@ var ICTL = ICTL || {};
     };
 
     ICTL.format = function(program) {
-        program = program.replace(/^(?:\(\d+\))? */mg, "");
-        while (program.match(/^｜ */m)) {
-            program = program.replace(/^｜ */mg, "");
+        program = program.replace(/^(?:\([0-9\-]+\))? */mg, "");
+        while (program.match(/^[｜│┃] */m)) {
+            program = program.replace(/^[｜│┃] */mg, "");
         }
         program = program.replace(/[\r\n]+$/, "");
         let lines = program.split(/\r?\n/);
@@ -96,13 +96,13 @@ var ICTL = ICTL || {};
         if (lines.length >= 100) digits = lines.length.toString().length;
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
-            indent += 1 - line.split("⎿").length;
+            indent += 1 - line.split(/[⎿┗├┣]/).length;
             if (line.match(/そうでなくもし(.+?)ならば[:：]$/m) ||
                 line.match(/そうでなければ[:：]$/m)) indent--;
             if (indent < 0) indent = 0;
-            new_program += "(" + ("0000000000" + (i + 1).toString()).slice(-digits) + ")";
-            for (let j = 0; j < indent; j++) new_program += "｜ ";
-            new_program += line + "\n";
+            new_program += "(" + ("0000000000" + (i + 1).toString()).slice(-digits) + ") ";
+            for (let j = 0; j < indent; j++) new_program += " │ ";
+            new_program += line.replace(/\s*[⎿┗├┣]\s*/g, " ⎿ ") + "\n";
             if (line.match(/[:：]$/)) indent++;
         }
         return new_program;
