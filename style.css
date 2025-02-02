@@ -20,6 +20,7 @@ textarea#program {
     white-space: pre;
     font-size: 16px;
     line-height: 1.2;
+    font-family: "MS Gothic", "Consolas", "Menlo", monospace;
 }
 
 textarea.hidden {
