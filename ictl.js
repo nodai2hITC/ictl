@@ -144,6 +144,14 @@ function 切り捨て(f) {
     return Math.floor(f);
 }
 
+function 整数(f) {
+    return Math.floor(f);
+}
+
+function 乱数() {
+    return Math.random();
+}
+
 function 枚数(kingaku) {
     const Kouka = [1, 5, 10, 50, 100];
     let maisu = 0, nokori = kingaku;

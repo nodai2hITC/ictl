@@ -17,14 +17,17 @@
     <p>
         <button id="add_if" type="button">条件分岐(if)</button>
         <button id="add_for" type="button">繰り返し(for)</button>
-        <button id="add_while" type="button">繰り返し(while)</button><br />
+        <button id="add_while" type="button">繰り返し(while)</button>
         <button id="add_vb" type="button">｜</button>
-        <button id="add_end" type="button">⎿</button>
+        <button id="add_end" type="button">⎿</button><br />
         <button id="add_print" type="button" title="表示する(表示データ1, 表示データ2, 表示データ3, ...)">表示する()</button>
         <button id="add_input" type="button">【外部からの入力】</button>
         <button id="add_len" type="button" title="要素数(配列) ... 配列の要素数を返します。">要素数()</button>
         <button id="add_chr" type="button" title="文字(0～25) ... 0～25 の整数を入れると、文字 &quot;a&quot;～&quot;z&quot; を返します。">文字()</button>
-        <button id="add_ord" type="button" title="差分(&quot;a&quot;～&quot;z&quot;) ... 文字 &quot;a&quot;～&quot;z&quot; を入れると、数値 0～25 を返します。">差分()</button><br />
+        <button id="add_ord" type="button" title="差分(&quot;a&quot;～&quot;z&quot;) ... 文字 &quot;a&quot;～&quot;z&quot; を入れると、数値 0～25 を返します。">差分()</button>
+        <button id="add_rand" type="button" title="乱数() ... 0以上1未満の乱数を返します。">乱数()</button>
+        <!--<button id="add_int" type="button" title="整数(数値) ... 小数点以下を切り捨てた値を返します。">整数()</button>-->
+        <button id="add_floor" type="button" title="切り捨て(数値) ... 小数点以下を切り捨てた値を返します。">切り捨て()</button><br />
         プログラム：
     </p>
 <textarea id="program" spellcheck="false"></textarea>
@@ -160,6 +163,15 @@ window.addEventListener("DOMContentLoaded", function() {
     });
     document.getElementById("add_ord").addEventListener("click", function(event) {
         insert("差分(小文字アルファベット)", false);
+    });
+    document.getElementById("add_rand").addEventListener("click", function(event) {
+        insert("乱数()", false);
+    });
+    /*document.getElementById("add_int").addEventListener("click", function(event) {
+        insert("整数(数値)", false);
+    });*/
+    document.getElementById("add_floor").addEventListener("click", function(event) {
+        insert("切り捨て(数値)", false);
     });
 
     document.getElementById("show_javascript").addEventListener("click", function(event) {
