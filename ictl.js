@@ -3,17 +3,19 @@
 var ICTL = ICTL || {};
 
 (function() {
-    ICTL.compile = function(program) {
+    ICTL.compile = function(program, one_based = false) {
         // 行番号を除去
         program = program.replace(/^\(\s*[0-9\-]+\s*\) */mg, "");
         // ｜を除去
         while (program.match(/^(\s*)[｜│┃]/m)) {
             program = program.replace(/^(\s*)[｜│┃]/mg, "$1  ");
         }
+        // 継続行を連結
+        program = program.replace(/([,+\-*\/]\s*)\n/g, "$1");
 
         // 行頭の⎿を 行末の } に変換
-        while (program.match(/^(\s*)[⎿┗├┣](.+)/m)) {
-            program = program.replace(/^(\s*)[⎿┗├┣](.+)/mg, "$1  $2 }");
+        while (program.match(/^(\s*)[⎿└┗├┣](.+)/m)) {
+            program = program.replace(/^(\s*)[⎿└┗├┣](.+)/mg, "$1  $2 }");
         }
 
         // 「そうでなくもし〇ならば:」を「} else if (〇) {」に変換
@@ -43,24 +45,26 @@ var ICTL = ICTL || {};
 
         // 「配列変数 〇 を初期化する」を「〇 = [];」に変換
         program = program.replace(/配列変数\s*(\w+)\s*を初期化する$/mg, "$1 = [];");
-        // 「要素数□の配列 〇 のすべての要素に △ を代入する」を「〇 = []; for(let i = 0; i < □; i++) { 〇[i] = △; }」に変換
+        // 「要素数□の配列 〇 のすべての要素に △ を代入する」を「〇 = [].concat(Array(□).fill(△))」に変換
         program = program.replace(/要素数(.+)の配列\s*(\w+)\s*のすべての要素に\s*(.+?)\s*を代入する$/mg, function(m, p1, p2, p3) {
-            return p2 + " = []; " +
-                "for(let i=0; i < " + p1 + "; i++) { " + p2 + "[i] = " + p3 + "; }";
+            return `${p2} = [].concat(Array(${p1}).fill(${p3}));`;
         });
         // 「配列 〇 のすべての要素に △ を代入する」を「〇 = new Proxy([], { get: function(obj, prop) { return prop in obj ? obj[prop] : △; } });」に変換
         program = program.replace(/配列\s*(\w+)\s*のすべての要素に\s*(.+?)\s*を代入する$/mg, function(m, p1, p2) {
             return p1 + " = new Proxy([], { get: function(obj, prop) { return prop in obj ? obj[prop] : " + p2 + "; } })";
         });
 
+        // 配列の添字が 1 始まりの場合、「= [...]」を「= [undefined, ...]」に変換
+        if (one_based) {
+            program = program.replace(/(=\s*\[)([^\]]*\])/mg, "$1undefined, $2");
+        }
+
         // 配列の初期化処理の追加
-        let arrays = program.match(/(\w+)\[/g);
+        let arrays = Array.from(new Set(program.match(/(\w+)\[/g)));
         if (arrays) {
-            let keys = {};
             for (let i = 0; i < arrays.length; i++) {
-                if (keys[arrays[i]]) continue;
+                if (program.replaceAll(" ", "").indexOf(arrays[i].replace("[", "=[")) != -1) continue;
                 program = arrays[i].replace("[", "=[];") + program;
-                keys[arrays[i]] = true;
             }
         }
 
@@ -94,16 +98,24 @@ var ICTL = ICTL || {};
         let new_program = "";
         let digits = 2;
         if (lines.length >= 100) digits = lines.length.toString().length;
+        let num = 0;
+        let continuation = false;
         for (let i = 0; i < lines.length; i++) {
             let line = lines[i];
-            indent += 1 - line.split(/[⎿┗├┣]/).length;
+            indent += 1 - line.split(/[⎿└┗├┣]/).length;
             if (line.match(/そうでなくもし(.+?)ならば[:：]$/m) ||
                 line.match(/そうでなければ[:：]$/m)) indent--;
             if (indent < 0) indent = 0;
-            new_program += "(" + ("0000000000" + (i + 1).toString()).slice(-digits) + ") ";
-            for (let j = 0; j < indent; j++) new_program += " │ ";
-            new_program += line.replace(/\s*[⎿┗├┣]\s*/g, " ⎿ ") + "\n";
-            if (line.match(/[:：]$/)) indent++;
+            if (continuation) {
+                new_program += "            ".slice(-digits - 3);
+            } else {
+                num += 1;
+                new_program += "(" + ("0000000000" + num.toString()).slice(-digits) + ") ";
+            }
+            for (let j = 0; j < indent; j++) new_program += " ｜ ";
+            new_program += line.replace(/\s*[⎿└┗├┣]\s*/g, " ⎿ ") + "\n";
+            if (line.match(/[:：]\s*$/)) indent++;
+            continuation = !!line.match(/[,+\-*\/]\s*$/);
         }
         return new_program;
     };
@@ -115,6 +127,7 @@ var ICTL = ICTL || {};
 })();
 
 function 要素数(array) {
+    if (array[0] === undefined) return array.length - 1;
     return array.length;
 }
 

@@ -14,20 +14,26 @@
 <form>
 
 <div class="program">
-    <p>プログラム 
-        <button id="add_if" type="button">条件分岐(if)</button> 
-        <button id="add_for" type="button">繰り返し(for)</button> 
-        <button id="add_while" type="button">繰り返し(while)</button> 
-        <button id="add_vb" type="button">｜</button> 
-        <button id="add_end" type="button">⎿</button> 
+    <p>
+        <button id="add_if" type="button">条件分岐(if)</button>
+        <button id="add_for" type="button">繰り返し(for)</button>
+        <button id="add_while" type="button">繰り返し(while)</button><br />
+        <button id="add_vb" type="button">｜</button>
+        <button id="add_end" type="button">⎿</button>
+        <button id="add_print" type="button" title="表示する(表示データ1, 表示データ2, 表示データ3, ...)">表示する()</button>
+        <button id="add_input" type="button">【外部からの入力】</button>
+        <button id="add_len" type="button" title="要素数(配列) ... 配列の要素数を返します。">要素数()</button>
+        <button id="add_chr" type="button" title="文字(0～25) ... 0～25 の整数を入れると、文字 &quot;a&quot;～&quot;z&quot; を返します。">文字()</button>
+        <button id="add_ord" type="button" title="差分(&quot;a&quot;～&quot;z&quot;) ... 文字 &quot;a&quot;～&quot;z&quot; を入れると、数値 0～25 を返します。">差分()</button><br />
+        プログラム：
     </p>
 <textarea id="program" spellcheck="false"></textarea>
 <p>
-    <button id="clear" type="button">新規作成</button> 
-    <button id="format" type="button">プログラム整形</button> 
-    <button id="save" type="button">一時保存</button> 
-    <button id="load" type="button">一時保存からの読み込み</button> 
-    <button id="copy" type="button">URL をコピー</button> 
+    <button id="clear" type="button">新規作成</button>
+    <button id="format" type="button">プログラム整形</button>
+    <button id="save" type="button">一時保存</button>
+    <button id="load" type="button">一時保存からの読み込み</button>
+    <button id="copy" type="button">URL でコピー</button>
 </p>
 
 <p><a href="https://nodai2hitc.github.io/ictl_example/">サンプルプログラム集</a></p>
@@ -35,7 +41,9 @@
 </div>
 
 <p class="run">
-    <button id="run" type="button">実行</button> 
+    <button id="run" type="button">▶実行</button>
+    <input type="checkbox" id="one_based" /><label for="one_based">配列の添字を 1 からにする</label>
+    <br />
     <input type="checkbox" id="show_javascript" /><label for="show_javascript">変換した JavaScript を表示</label>
 </p>
 
@@ -52,31 +60,49 @@
 
 window.addEventListener("DOMContentLoaded", function() {
     function format() {
-        let program = document.getElementById("program").value;
+        const program = document.getElementById("program").value;
         document.getElementById("program").value = ICTL.format(program);
     }
 
+    function insert(text, with_format = true) {
+        const textarea = document.getElementById("program");
+        textarea.focus();
+        /*
+        const pos1 = textarea.selectionStart;
+        const pos2 = textarea.selectionEnd;
+        const before = textarea.value.substring(0, pos1);
+        const after  = textarea.value.substring(pos2);
+        textarea.value = before + text + after;
+        textarea.selectionEnd = pos1 + text.length;
+        */
+        document.execCommand("insertText", false, text);
+        if (with_format) format();
+    }
+
     function base64encode(str) {
-        let uint8arr = new TextEncoder().encode(str);
-        let binStr = Array.from(uint8arr).map(b => String.fromCharCode(b)).join("");
+        const uint8arr = new TextEncoder().encode(str);
+        const binStr = Array.from(uint8arr).map(b => String.fromCharCode(b)).join("");
         return btoa(binStr).replaceAll("+", "_").replaceAll("/", "-").replaceAll("=", ".");
     }
 
     function base64decode(str) {
-        let binStr = atob(str.replaceAll("_", "+").replaceAll("-", "/").replaceAll(".", "="));
-        let uint8arr = binStr.split("").map(b => b.charCodeAt(0));
+        const binStr = atob(str.replaceAll("_", "+").replaceAll("-", "/").replaceAll(".", "="));
+        const uint8arr = binStr.split("").map(b => b.charCodeAt(0));
         return new TextDecoder().decode(Uint8Array.from(uint8arr));
     }
 
     document.getElementById("run").addEventListener("click", function(event) {
         document.getElementById("output").value = "";
-        let program = document.getElementById("program").value;
-        let js = ICTL.compile(program);
+        const program = document.getElementById("program").value;
+        const js = ICTL.compile(program, document.getElementById("one_based").checked);
         document.getElementById("javascript").value = js;
         try {
             Function(js)();
         } catch(error) {
-            document.getElementById("output").value = "【エラー】\n" + error.toString();
+            let err_str = "【エラー】";
+            const matched = error.stack?.match(/(?:<anonymous>|Function):(\d+)/);
+            if (matched) err_str = `【${parseInt(matched[1]) - 2}行目でエラー】`;
+            document.getElementById("output").value += err_str + "\n" + error.toString();
             throw error;
         }
     });
@@ -106,27 +132,34 @@ window.addEventListener("DOMContentLoaded", function() {
     });
 
     document.getElementById("add_if").addEventListener("click", function(event) {
-        document.getElementById("program").focus();
-        document.execCommand("insertText", false, "もし 条件1 ならば:\n\nそうでなくもし 条件2 ならば:\n\nそうでなければ:\n\n⎿");
-        format();
+        insert("もし 条件1 ならば:\n\nそうでなくもし 条件2 ならば:\n\nそうでなければ:\n\n⎿");
     });
     document.getElementById("add_for").addEventListener("click", function(event) {
-        document.getElementById("program").focus();
-        document.execCommand("insertText", false, "変数名 を 開始番号 から 終了番号 まで 1 ずつ増やしながら繰り返す:\n\n⎿");
-        format();
+        insert("変数名 を 開始番号 から 終了番号 まで 1 ずつ増やしながら繰り返す:\n\n⎿");
     });
     document.getElementById("add_while").addEventListener("click", function(event) {
-        document.getElementById("program").focus();
-        document.execCommand("insertText", false, "条件 の間繰り返す:\n\n⎿");
-        format();
+        insert("条件 の間繰り返す:\n\n⎿");
     });
     document.getElementById("add_vb").addEventListener("click", function(event) {
-        document.getElementById("program").focus();
-        document.execCommand("insertText", false, "｜");
+        insert("｜", false);
     });
     document.getElementById("add_end").addEventListener("click", function(event) {
-        document.getElementById("program").focus();
-        document.execCommand("insertText", false, "⎿");
+        insert("⎿", false);
+    });
+    document.getElementById("add_print").addEventListener("click", function(event) {
+        insert("表示する()", false);
+    });
+    document.getElementById("add_input").addEventListener("click", function(event) {
+        insert("【外部からの入力】", false);
+    });
+    document.getElementById("add_len").addEventListener("click", function(event) {
+        insert("要素数(配列)", false);
+    });
+    document.getElementById("add_chr").addEventListener("click", function(event) {
+        insert("文字(数値)", false);
+    });
+    document.getElementById("add_ord").addEventListener("click", function(event) {
+        insert("差分(小文字アルファベット)", false);
     });
 
     document.getElementById("show_javascript").addEventListener("click", function(event) {
@@ -138,6 +171,7 @@ window.addEventListener("DOMContentLoaded", function() {
             document.getElementById("output").style.height = "28em";
         }
     });
+    document.getElementById("show_javascript").checked = false;
 
     if (location.href.indexOf("#") != -1) {
         document.getElementById("program").value = base64decode(location.hash.replace("#", ""));
