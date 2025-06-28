@@ -15,12 +15,24 @@ p {
 }
 
 textarea#program {
-    width: 95%;
+    width: 85%;
     height: 30em;
     white-space: pre;
     font-size: 16px;
     line-height: 1.2;
     font-family: "MS Gothic", "Consolas", "Menlo", monospace;
+}
+
+div#line {
+    width: 1em;
+    height: 30em;
+    line-height: 1.2;
+    font-family: "MS Gothic", "Consolas", "Menlo", monospace;
+    color: red;
+    overflow: hidden;
+    border: 2px white solid;
+    white-space: pre;
+    float: left;
 }
 
 textarea.hidden {
@@ -34,7 +46,13 @@ textarea#javascript {
     display: none;
 }
 
+textarea#vars {
+    width: 95%;
+    height: 10em;
+    white-space: pre;
+}
+
 textarea#output {
     width: 95%;
-    height: 28em;
+    height: 18em;
 }
